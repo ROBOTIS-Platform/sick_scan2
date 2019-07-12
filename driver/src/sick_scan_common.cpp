@@ -228,8 +228,10 @@ namespace sick_scan
 			min_angle = -2.35619449;
 			max_angle = +2.35619449;
 
-			node->set_parameter_if_not_set(PARAM_MIN_ANG, min_angle);
-			node->set_parameter_if_not_set(PARAM_MAX_ANG, max_angle);
+			// node->set_parameter_if_not_set(PARAM_MIN_ANG, min_angle);
+			// node->set_parameter_if_not_set(PARAM_MAX_ANG, max_angle);
+			node->declare_parameter(PARAM_MIN_ANG, min_angle);
+			node->declare_parameter(PARAM_MAX_ANG, max_angle);
 
 			//			node->set_parameter_if_not_set(PARAM_RES_ANG, );
 
@@ -261,7 +263,7 @@ namespace sick_scan
 		// scan publisher
 		pub_ = nh_.advertise<sensor_msgs::LaserScan>("scan", 1000);
 #endif
-        pub_ = getMainNode()->create_publisher<sensor_msgs::msg::LaserScan>("scan");
+        pub_ = getMainNode()->create_publisher<sensor_msgs::msg::LaserScan>("scan", 1000);
 
     }
 
