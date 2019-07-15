@@ -138,15 +138,15 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
   bool doInternalDebug = false;
   bool emulSensor = false;
 
-  std::vector<std::string> paramArr;
-  paramArr.push_back("hostname");
-  paramArr.push_back("port");
-  paramArr.push_back("name");
+  // std::vector<std::string> paramArr;
+  // paramArr.push_back("hostname");
+  // paramArr.push_back("port");
+  // paramArr.push_back("name");
 
 
-    std::string scannerName = "sick_tim_5xx";
-    std::string hostname = "192.168.0.71";
-    std::string port = "2112";
+    // std::string scannerName = "sick_tim_5xx";
+    // std::string hostname = "192.168.0.71";
+    // std::string port = "2112";
 
 
     for (int i = 0; i < argc; i++)
@@ -173,44 +173,44 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
         }
       }
 
-      for (int i = 0; i < paramArr.size(); i++)
-      {
-        std::string callParamName = std::string("__");
-        callParamName +=  paramArr[i];
-        if (tag.compare(callParamName) == 0)
-        {
-          // node->set_parameter_if_not_set(paramArr[i], val);
-          node->declare_parameter(paramArr[i], val);
-          std::string s = "Set param " + paramArr[i] + " to " + val;
-          RCLCPP_INFO(node->get_logger(),s.c_str());
+      // for (int i = 0; i < paramArr.size(); i++)
+      // {
+      //   std::string callParamName = std::string("__");
+      //   callParamName +=  paramArr[i];
+      //   if (tag.compare(callParamName) == 0)
+      //   {
+      //     // node->set_parameter_if_not_set(paramArr[i], val);
+      //     node->declare_parameter(paramArr[i], val);
+      //     std::string s = "Set param " + paramArr[i] + " to " + val;
+      //     RCLCPP_INFO(node->get_logger(),s.c_str());
 
-          // hacky - will be changed ...
-          if (paramArr[i].compare("hostname") == 0)
-          {
-            hostname = val;
-          }
-          if (paramArr[i].compare("port") == 0)
-          {
-            port = val;
-          }
-          if (paramArr[i].compare("name") == 0)
-          {
-            scannerName = val;
-          }
-        }
-      }
+      //     // hacky - will be changed ...
+      //     if (paramArr[i].compare("hostname") == 0)
+      //     {
+      //       hostname = val;
+      //     }
+      //     if (paramArr[i].compare("port") == 0)
+      //     {
+      //       port = val;
+      //     }
+      //     if (paramArr[i].compare("name") == 0)
+      //     {
+      //       scannerName = val;
+      //     }
+      //   }
+      // }
     }
   }
 
-
-#if TODO
-  if (false == nhPriv.getParam("scanner_type", scannerName))
+  std::string scannerName = "sick_time_5xx";
+  node->declare_parameter("scanner_type");
+  if (false == node->get_parameter_or<std::string>("scanner_type", scannerName, std::string("sick_tim_5xx")))
   {
-    ROS_ERROR("cannot find parameter ""scanner_type"" in the param set. Please specify scanner_type.");
-    ROS_ERROR("Try to set %s as fallback.\n", nodeName.c_str());
+    RCLCPP_ERROR(node->get_logger(), "cannot find parameter ""scanner_type"" in the param set. Please specify scanner_type.");
+    RCLCPP_ERROR(node->get_logger(), "Try to set %s as fallback.\n", nodeName.c_str());
     scannerName = nodeName;
   }
-#endif
+
 
   if (doInternalDebug)
   {
@@ -221,33 +221,33 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
   }
 
   bool useTCP = true;
-
+  std::string hostname = "192.168.0.1";
+  node->declare_parameter("hostname");
 
   // node->set_parameter_if_not_set("name",scannerName);
   // node->set_parameter_if_not_set("hostname",hostname);
   // node->set_parameter_if_not_set("port",port);
 
-  node->declare_parameter("name",scannerName);
-  node->declare_parameter("hostname",hostname);
-  node->declare_parameter("port",port);
-
-  int timelimit = 5;
-#if TODO
-  if (nhPriv.getParam("hostname", hostname))
+  if (node->get_parameter_or<std::string>("hostname", hostname, std::string("192.168.0.1")))
   {
     useTCP = true;
   }
 
-  nhPriv.param<std::string>("port", port, "2112");
-  nhPriv.param("timelimit", timelimit, 5);
-#endif
+  int32_t port = 2111;
+  node->declare_parameter("port");
+  node->get_parameter_or<int32_t>("port", port, 2111);
 
-  bool subscribe_datagram = false;
-  int device_number = 0;
-#if TODO
-  nhPriv.param("subscribe_datagram", subscribe_datagram, false);
-  nhPriv.param("device_number", device_number, 0);
-#endif
+  int32_t timelimit = 5;
+  node->declare_parameter("timelimit");
+  node->get_parameter_or<int32_t>("timelimit", timelimit, 5);
+
+
+  // bool subscribe_datagram = false;
+  // int device_number = 0;
+
+  // nhPriv.param("subscribe_datagram", subscribe_datagram, false);
+  // nhPriv.param("device_number", device_number, 0);
+
 
   signal(SIGINT, h_sig_sigint); // just a workaround - use two ctrl-c :-(
 
@@ -255,55 +255,56 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
   sick_scan::SickGenericParser *parser = new sick_scan::SickGenericParser(scannerName);
 
 
-  double param;
+  double param = 0.0;
   char colaDialectId = 'A'; // A or B (Ascii or Binary)
-#if TODO
-  if (nhPriv.getParam("range_min", param))
+
+  node->declare_parameter("range_min");
+  node->declare_parameter("range_max");
+  if (node->get_parameter<double>("range_min", param))
   {
     parser->set_range_min(param);
   }
-  if (nhPriv.getParam("range_max", param))
+  if (node->get_parameter<double>("range_max", param))
   {
     parser->set_range_max(param);
   }
-  if (nhPriv.getParam("time_increment", param))
-  {
-    parser->set_time_increment(param);
-  }
-#endif
+  // if (nhPriv.getParam("time_increment", param))
+  // {
+  //   parser->set_time_increment(param);
+  // }
   /*
    *  Check, if parameter for protocol type is set
    */
   bool use_binary_protocol = true;
-#if TODO
-  if (true == nhPriv.getParam("emul_sensor", emulSensor))
+
+  node->declare_parameter("use_binary_protocol");
+  // if (true == nhPriv.getParam("emul_sensor", emulSensor))
+  // {
+  //   ROS_INFO("Found emul_sensor overwriting default settings. Emulation: %s\n", emulSensor ? "True" : "False");
+  // }
+  if (true == node->get_parameter<bool>("use_binary_protocol", use_binary_protocol))
   {
-    ROS_INFO("Found emul_sensor overwriting default settings. Emulation: %s\n", emulSensor ? "True" : "False");
-  }
-  if (true == nhPriv.getParam("use_binary_protocol", use_binary_protocol))
-  {
-    ROS_INFO("Found sopas_protocol_type param overwriting default protocol:");
+    RCLCPP_INFO(node->get_logger(), "Found sopas_protocol_type param overwriting default protocol:");
     if (use_binary_protocol == true)
     {
-      ROS_INFO("Binary protocol activated");
+      RCLCPP_INFO(node->get_logger(), "Binary protocol activated");
     }
     else
     {
       if (parser->getCurrentParamPtr()->getNumberOfLayers() > 4)
       {
-        nhPriv.setParam("sopas_protocol_type", true);
+        // nhPriv.setParam("sopas_protocol_type", true);
         use_binary_protocol = true;
-        ROS_WARN("This scanner type does not support ASCII communication.\n"
+        RCLCPP_WARN(node->get_logger(), "This scanner type does not support ASCII communication.\n"
                          "Binary communication has been activated.\n"
                          "The parameter \"sopas_protocol_type\" has been set to \"True\".");
       } else
       {
-        ROS_INFO("ASCII protocol activated");
+        RCLCPP_INFO(node->get_logger(), "ASCII protocol activated");
       }
     }
     parser->getCurrentParamPtr()->setUseBinaryProtocol(use_binary_protocol);
   }
-#endif
 
   if (parser->getCurrentParamPtr()->getUseBinaryProtocol())
   {
@@ -334,9 +335,9 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
         if (useTCP)
         {
           RCLCPP_INFO(node->get_logger(),"hostname: %s", hostname.c_str());
-          RCLCPP_INFO(node->get_logger(),"Port    : %s", port.c_str());
+          RCLCPP_INFO(node->get_logger(),"Port    : %d", port);
 
-          s = new sick_scan::SickScanCommonTcp(hostname, port, timelimit, parser, colaDialectId);
+          s = new sick_scan::SickScanCommonTcp(hostname, std::to_string(port), timelimit, parser, colaDialectId);
         }
         else
         {
@@ -351,6 +352,7 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
         }
 
         result = s->init();
+        signal(SIGINT, SIG_DFL); // change back to standard signal handler after initialising
 
         runState = scanner_run; // after initialising switch to run state
         break;

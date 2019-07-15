@@ -224,22 +224,25 @@ namespace sick_scan
 			auto node = getMainNode();
 
 			double min_angle, max_angle, res_angle;
+			std::string frame_id = "laser";
 
 			min_angle = -2.35619449;
 			max_angle = +2.35619449;
 
 			// node->set_parameter_if_not_set(PARAM_MIN_ANG, min_angle);
 			// node->set_parameter_if_not_set(PARAM_MAX_ANG, max_angle);
-			node->declare_parameter(PARAM_MIN_ANG, min_angle);
-			node->declare_parameter(PARAM_MAX_ANG, max_angle);
+			node->declare_parameter(PARAM_MIN_ANG);
+			node->declare_parameter(PARAM_MAX_ANG);
+			node->declare_parameter("frame_id");
 
 			//			node->set_parameter_if_not_set(PARAM_RES_ANG, );
 
-			node->get_parameter(PARAM_MIN_ANG, min_angle);
-			node->get_parameter(PARAM_MAX_ANG, max_angle);
+			node->get_parameter<double>(PARAM_MIN_ANG, min_angle);
+			node->get_parameter<double>(PARAM_MAX_ANG, max_angle);
+			node->get_parameter_or<std::string>("frame_id", frame_id, std::string("laser"));
 			cfg.min_ang = min_angle;
 			cfg.max_ang = max_angle;
-			cfg.frame_id = "laser";
+			cfg.frame_id = frame_id;
 			cfg.skip = 0;
 			update_config(cfg);
 		}
@@ -852,15 +855,17 @@ namespace sick_scan
 		bool rssiFlag = true;
 		bool rssiResolutionIs16Bit = true; //True=16 bit Flase=8bit
 		int activeEchos = 0;
-#if TODO
-		ros::NodeHandle pn("~");
-		pn.getParam("intensity", rssiFlag);
-		pn.getParam("intensity_resolution_16bit", rssiResolutionIs16Bit);
+
+		// ros::NodeHandle pn("~");
+		node->declare_parameter("intensity");
+		node->declare_parameter("intensity_resolution_16bit");
+		node->get_parameter<bool>("intensity", rssiFlag);
+		node->get_parameter<bool>("intensity_resolution_16bit", rssiResolutionIs16Bit);
 		this->parser_->getCurrentParamPtr()->setIntensityResolutionIs16Bit(rssiResolutionIs16Bit);
 
-		// parse active_echos entry and set flag array
-		pn.getParam("active_echos", activeEchos);
-#endif
+		// // parse active_echos entry and set flag array
+		// node->get_parameter<bool>("active_echos", activeEchos);
+
 		RCLCPP_INFO(node->get_logger(),"Parameter setting for <active_echo: %d>", activeEchos);
 		std::vector<bool> outputChannelFlag;
 		outputChannelFlag.resize(maxNumberOfEchos);
